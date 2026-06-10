@@ -18,8 +18,7 @@ android/app/src/main/res/xml/config.xml
 android/.idea/
 *.iml
 
-# secrets — מפתחות מקומיים (לא לדחוף!)
-src/secrets.js
+# קבצי סביבה מקומיים
 .env
 .env.*
 !.env.example
@@ -29,6 +28,7 @@ src/secrets.js
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.apk.zip
 
 # editor / OS
 .DS_Store

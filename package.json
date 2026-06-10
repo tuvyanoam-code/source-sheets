@@ -8,12 +8,15 @@
     "build": "vite build",
     "preview": "vite preview",
     "cap:sync": "vite build && cap sync",
-    "android": "vite build && cap sync && cap open android"
+    "android": "vite build && cap sync && cap open android",
+    "ios": "vite build && cap sync ios && cap open ios",
+    "ios:sync": "vite build && cap sync ios"
   },
   "dependencies": {
     "@capacitor/android": "^6.1.2",
     "@capacitor/core": "^6.1.2",
     "@capacitor/filesystem": "^6.0.1",
+    "@capacitor/ios": "^6.1.2",
     "@capacitor/share": "^6.0.2",
     "@fontsource/assistant": "^5.0.13",
     "@fontsource/bellefair": "^5.0.12",

@@ -2,7 +2,7 @@
 
 אפליקציה מינימליסטית שמקבלת רשימת מקורות טקסט יהודיים (שורה לכל מקור), שואבת את הטקסט
 מ‑**ספריא** (וגיבוי מ‑**ויקיטקסט**), ומפיקה דף מקורות נקי בעיצוב משרדי לייצוא **PDF**.
-רצה גם בדפדפן וגם כ‑**APK** לאנדרואיד.
+רצה בדפדפן, כ‑**APK** לאנדרואיד, וכפרויקט **iOS/Xcode** מוכן לחתימה רשמית.
 
 ## תכונות
 - **ניסוח חופשי** — אין צורך לדעת איך המקור מקוטלג. אפשר לכתוב «מי השילוח על פרשת קורח»,
@@ -40,6 +40,33 @@ cd android && \
 
 ה‑APK המוכן נמצא גם בשורש הפרויקט: `דף-מקורות.apk`.
 התקנה על מכשיר מחובר: `adb install -r דף-מקורות.apk`.
+
+## בניית אפליקציית iPhone / חתימה רשמית ב-Xcode
+הפרויקט כולל פלטפורמת iOS של Capacitor תחת `ios/`.
+
+דרישות:
+- Xcode מלא מותקן מ-App Store (לא רק Command Line Tools).
+- CocoaPods: `sudo gem install cocoapods` או `brew install cocoapods`.
+- Apple ID מחובר ב-Xcode. להפצה ב-TestFlight/App Store נדרש Apple Developer Program.
+
+פקודות לאחר התקנת Xcode:
+```bash
+npm install
+npm run ios:sync
+npm run ios
+```
+
+ב-Xcode:
+1. פתח את `ios/App/App.xcworkspace` (לא `App.xcodeproj` אחרי התקנת Pods).
+2. בחר Target בשם `App` → `Signing & Capabilities`.
+3. סמן `Automatically manage signing`.
+4. בחר את ה-Team שלך.
+5. שנה Bundle Identifier אם צריך (ברירת מחדל: `com.levitt.sourcesheets`).
+6. להרצה על iPhone: בחר מכשיר ולחץ Run.
+7. להפצה רשמית: `Product` → `Archive` → `Distribute App`.
+
+הערה: במכונה שבה הפרויקט נוצר חסר Xcode מלא, לכן ה-iOS project נוצר אך `pod install`/Archive
+לא יכולים לרוץ עד להתקנת Xcode וכניסה לחשבון Apple.
 
 ## מבנה
 - `src/lib/sefaria.js`, `src/lib/wikisource.js`, `src/lib/loadSources.js` — שליפת מקורות.
