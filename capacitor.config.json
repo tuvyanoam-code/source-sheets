@@ -1,0 +1,8 @@
+{
+  "appId": "com.levitt.sourcesheets",
+  "appName": "דף מקורות",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": true
+  }
+}
