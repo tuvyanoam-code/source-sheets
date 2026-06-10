@@ -17,7 +17,6 @@ export default function App() {
   const [settings, setSettings] = useState(loadSettings())
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(null)
-  const [exporting, setExporting] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const sheetRef = useRef(null)
@@ -59,15 +58,13 @@ export default function App() {
     setSources((prev) => prev.filter((_, i) => i !== index))
   }
 
-  async function handleExport() {
+  function handleExport() {
     if (sources.length === 0) return
-    setExporting(true)
+    // קריאה סינכרונית ישירה — שומר על מחוות-המשתמש כך שההדפסה לא תיחסם
     try {
-      await exportSheetToPdf(title)
+      exportSheetToPdf(title)
     } catch (err) {
       alert('שגיאה בייצוא ה-PDF: ' + err.message)
-    } finally {
-      setExporting(false)
     }
   }
 
@@ -128,9 +125,9 @@ export default function App() {
           <button
             className="btn"
             onClick={handleExport}
-            disabled={exporting || sources.length === 0}
+            disabled={sources.length === 0}
           >
-            {exporting ? 'מייצא…' : 'ייצוא PDF'}
+            ייצוא PDF
           </button>
         </div>
         <div className="actions">

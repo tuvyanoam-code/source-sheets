@@ -1,8 +1,9 @@
 // ייצוא דף המקורות ל-PDF דרך מנוע ההדפסה של הדפדפן.
-// יתרון מכריע על פני "צילום" של הדף (html2canvas): הדפדפן מבצע חלוקה אמיתית
-// לעמודים לפי שורות — לעולם לא חותך שורה באמצע, מזרים טקסט ארוך על פני עמודים,
-// והפלט וקטורי, חד ובר-בחירה. עובד גם בדפדפן וגם ב-WebView של אנדרואיד
-// (דיאלוג ההדפסה של המערכת כולל "שמירה כ-PDF").
+// יתרון מכריע על פני "צילום" (html2canvas): הדפדפן מבצע חלוקה אמיתית לעמודים
+// לפי שורות — לעולם לא חותך שורה, והפלט וקטורי, חד ובר-בחירה.
+//
+// קריטי: window.print() חייב להיקרא *ישירות* בתוך מחוות המשתמש (הלחיצה),
+// בלי setTimeout/await לפניו — אחרת דפדפנים (במיוחד נייד ו-WebView) חוסמים אותו.
 
 function sanitizeTitle(title) {
   return (title || 'דף מקורות').replace(/[\\/:*?"<>|]+/g, '').trim() || 'דף מקורות'
@@ -10,27 +11,22 @@ function sanitizeTitle(title) {
 
 // מפעיל הדפסה/שמירת-PDF. שם הקובץ המוצע נגזר מכותרת הדף (document.title).
 export function exportSheetToPdf(title) {
-  return new Promise((resolve) => {
-    const safeTitle = sanitizeTitle(title)
-    const prevTitle = document.title
-    document.title = safeTitle
+  const prevTitle = document.title
+  document.title = sanitizeTitle(title)
 
-    const restore = () => {
-      document.title = prevTitle
-      window.removeEventListener('afterprint', restore)
-      resolve({ ok: true })
-    }
-    window.addEventListener('afterprint', restore)
+  const restore = () => {
+    document.title = prevTitle
+    window.removeEventListener('afterprint', restore)
+  }
+  window.addEventListener('afterprint', restore)
 
-    // מרווח קטן כדי לאפשר ל-DOM/פונטים להתייצב לפני ההדפסה
-    setTimeout(() => {
-      window.print()
-      // נפילה-לאחור: אם afterprint לא נורה (דפדפנים מסוימים), משחזרים בכל זאת
-      setTimeout(() => {
-        if (document.title === safeTitle) restore()
-      }, 1500)
-    }, 60)
-  })
+  // קריאה סינכרונית — בתוך מחוות הלחיצה
+  window.print()
+
+  // נפילה-לאחור: אם afterprint לא נורה (דפדפנים מסוימים), משחזרים את הכותרת
+  setTimeout(() => {
+    if (document.title !== prevTitle) restore()
+  }, 3000)
 }
 
 export const printSheet = exportSheetToPdf
