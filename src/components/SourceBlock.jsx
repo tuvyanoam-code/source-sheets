@@ -44,7 +44,7 @@ export default function SourceBlock({
           style={{ fontFamily: headingStack, fontSize: settings.headingSize }}
           contentEditable={editMode}
           suppressContentEditableWarning
-          onBlur={(e) => onUpdateSource(index, { heRef: e.currentTarget.innerText })}
+          onBlur={(e) => onUpdateSource(index, { heRef: e.currentTarget.innerText, edited: true })}
         >
           {source.heRef || source.ref}
         </h3>
@@ -86,7 +86,7 @@ export default function SourceBlock({
           }}
           contentEditable={editMode}
           suppressContentEditableWarning
-          onBlur={(e) => onUpdateSource(index, { text: e.currentTarget.innerText })}
+          onBlur={(e) => onUpdateSource(index, { text: e.currentTarget.innerText, edited: true })}
         >
           {source.text}
         </p>
