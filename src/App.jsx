@@ -35,17 +35,27 @@ export default function App() {
       (i, total) => setProgress({ done: i, total }),
       { googleKey: settings.googleKey, googleCx: settings.googleCx },
     )
-    setSources(results)
+    // שומרים עריכות ידניות: מקור שכבר נטען מאותה שורה ונערך — לא נדרס.
+    setSources((prev) =>
+      results.map((r, i) => {
+        const old = prev[i]
+        return old && old.edited && old.resolvedFrom === r.resolvedFrom ? old : r
+      }),
+    )
     setLoading(false)
     setProgress(null)
   }
 
   async function handleSelectCandidate(index, ref) {
     const original = sources[index]
+    // מעבירים גם את המספרים שנשלפו מהשורה — בלעדיהם בחירה בבורר
+    // הייתה מחזירה את הספר כולו במקום את הקטע המבוקש.
     const updated = await loadByRef(
       ref,
       original.resolvedFrom || original.ref,
       original.candidates,
+      original.pendingSections,
+      original.pendingAmud,
     )
     setSources((prev) => prev.map((s, i) => (i === index ? updated : s)))
   }
