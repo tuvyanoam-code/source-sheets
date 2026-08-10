@@ -1,6 +1,6 @@
 import { fetchSource } from './sefaria.js'
 import { fetchFromWikisource, fetchWikisourcePage } from './wikisource.js'
-import { resolveChoices } from './resolve.js'
+import { resolveChoices, applySections } from './resolve.js'
 
 // שליפה לפי ref — מנתב 'ws:' לויקיטקסט, אחרת לספריא.
 function fetchByRef(ref) {
@@ -15,16 +15,12 @@ export function parseRefs(raw) {
     .filter((l) => l && !l.startsWith('#'))
 }
 
-// שולף מקור בודד:
-// 1) ניסיון ישיר (רפרנס מדויק כמו "בראשית א, א") → מוצג ישירות
-// 2) זיהוי מדויק של ספריא (is_ref) → מוצג ישירות
-// 3) זיהוי לא ודאי → לא מציגים טקסט אלא בורר אפשרויות (needsChoice) לבחירה לפני התצוגה
 export async function loadSource(ref, googleCfg) {
-  // 1) רפרנס מדויק
+  // 1) רפרנס מדויק שספריא מבינה כמו שהוא ("בראשית א, א")
   const direct = await fetchSource(ref)
   if (direct.ok) return direct
 
-  // 2/3) איסוף מועמדים
+  // 2) פענוח
   let choices = { exact: null, options: [], message: null }
   try {
     choices = await resolveChoices(ref, googleCfg)
@@ -32,14 +28,13 @@ export async function loadSource(ref, googleCfg) {
     /* נטפל למטה */
   }
 
-  // זיהוי מדויק — מציגים ישירות
-  if (choices.exact && choices.exact.ref) {
+  if (choices.exact?.ref) {
     const r = await fetchSource(choices.exact.ref)
-    if (r.ok) return { ...r, resolvedFrom: ref }
+    if (r.ok) return { ...r, resolvedFrom: ref, note: choices.message || null }
   }
 
-  // זיהוי לא ודאי — מחזירים בורר לבחירת המשתמש (אין טקסט עד שיבחר)
-  if (choices.options && choices.options.length) {
+  // 3) זיהוי לא ודאי — בורר. שומרים את המספרים כדי לחברם אחרי הבחירה.
+  if (choices.options?.length) {
     return {
       ok: false,
       needsChoice: true,
@@ -48,26 +43,39 @@ export async function loadSource(ref, googleCfg) {
       resolvedFrom: ref,
       options: choices.options,
       message: choices.message,
+      pendingSections: choices.pendingSections || [],
+      pendingAmud: choices.pendingAmud || null,
     }
   }
 
-  // לא נמצא כלום — גיבוי מויקיטקסט, ואז כישלון
+  // 4) גיבוי ויקיטקסט
   const fallback = await fetchFromWikisource(ref)
   if (fallback.ok) return fallback
   return { ok: false, ref, heRef: ref, error: direct.error }
 }
 
-// טוען רפרנס לפי ref מפורש (לשימוש בבחירה מהבורר) — מצרף את הניסוח המקורי.
-export async function loadByRef(ref, resolvedFrom, candidates) {
-  const r = await fetchByRef(ref)
+/**
+ * טעינה לפי ref שנבחר בבורר.
+ * חדש: מחבר את המספרים שנשלפו מהשורה המקורית. בלי זה בחירה של
+ * "משנה למלך על הלכות כלים" הייתה מחזירה את הספר כולו במקום יג,ד.
+ */
+export async function loadByRef(ref, resolvedFrom, candidates, pendingSections, pendingAmud) {
+  let target = ref
+  if (pendingSections?.length) {
+    try {
+      target = await applySections(ref, pendingSections, pendingAmud)
+    } catch {
+      target = ref
+    }
+  }
+  const r = await fetchByRef(target)
   if (r.ok) return { ...r, resolvedFrom, candidates }
-  return { ok: false, ref, heRef: ref, error: r.error }
+  return { ok: false, ref: target, heRef: target, error: r.error }
 }
 
 export async function loadAllSources(raw, onProgress, googleCfg) {
   const refs = parseRefs(raw)
   let done = 0
-  // טוענים את כל המקורות במקביל ושומרים על הסדר לפי האינדקס
   const results = await Promise.all(
     refs.map(async (ref) => {
       const r = await loadSource(ref, googleCfg)
